@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>第一次</title>
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 v3Position;
+        void main(void){
+            gl_Position = vec4(v3Position,1.0);
+        }
+    </script>
+    <script id="shader-fs" type="x-shader/x-fragment">
+        void main(void){
+            gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+        }
+    </script>
+    <script>
+        function shaderSourceFromScript(scriptID) {
+            var shaderScript = document.getElementById(scriptID)
+            if (shaderScript == null) return "";
+            var surceCode = ''
+            var child = shaderScript.firstChild
+            while (child) {
+                if (child.nodeType == child.TEXT_NODE) surceCode += child.textContent;
+                child = child.nextSibling;
+            }
+            return surceCode
+        }
+
+        var webGL = null
+        var vertexShaderObject = null
+        var fragmentShaderObject = null
+        var programObject = null
+        var triangleBuffer = null
+        var v3PositionIndex = 0
+
+        function init() {
+            var myCanvasObject = document.getElementById('myCanvas')
+            webGL = myCanvasObject.getContext("experimental-webgl")
+
+            webGL.viewport(0, 0, myCanvasObject.clientWidth, myCanvasObject.clientHeight);
+            vertexShaderObject = webGL.createShader(webGL.VERTEX_SHADER);
+            fragmentShaderObject = webGL.createShader(webGL.FRAGMENT_SHADER);
+
+            webGL.shaderSource(vertexShaderObject, shaderSourceFromScript('shader-vs'))
+            webGL.shaderSource(fragmentShaderObject, shaderSourceFromScript('shader-fs'))
+
+            webGL.compileShader(vertexShaderObject)
+            webGL.compileShader(fragmentShaderObject)
+            
+            if (!webGL.getShaderParameter(vertexShaderObject, webGL.COMPILE_STATUS)) {
+                alert("error vertxShaderOBject");
+                console.log(webGL.getShaderInfoLog(vertexShaderObject))
+
+                return;
+            }
+            if (!webGL.getShaderParameter(fragmentShaderObject, webGL.COMPILE_STATUS)) {
+                alert("error fragmentShaderObject");
+                console.log(webGL.getShaderInfoLog(fragmentShaderObject))
+
+                return;
+            }
+
+            programObject = webGL.createProgram();
+            webGL.attachShader(programObject,vertexShaderObject)
+            webGL.attachShader(programObject,fragmentShaderObject)
+            
+            webGL.bindAttribLocation(programObject,v3PositionIndex,"v3Position")
+            webGL.linkProgram(programObject)
+
+            if(!webGL.getProgramParameter(programObject,webGL.LINK_STATUS)){
+                alert('error:programObject');
+                console.log(webGL.getShaderInfoLog(vertexShaderObject))
+                return;
+            }
+            webGL.useProgram(programObject);
+
+            var jsArrayData = [
+                0.0,1.0,0.0,
+                -1.0,-1.0,0.0,
+                1.0,0.0,0.0
+            ]
+
+            triangleBuffer = webGL.createBuffer()
+            webGL.bindBuffer(webGL.ARRAY_BUFFER,triangleBuffer)
+            webGL.bufferData(webGL.ARRAY_BUFFER,new Float32Array(jsArrayData),webGL.STATIC_DRAW)
+            webGL.clearColor(0.0,0.0,0.0,1.0);
+            webGL.clear(webGL.COLOR_BUFFER_BIT);
+
+            webGL.bindBuffer(webGL.ARRAY_BUFFER,triangleBuffer)
+            webGL.enableVertexAttribArray(v3PositionIndex)
+            webGL.vertexAttribPointer(v3PositionIndex,3,webGL.FLOAT,false,0,0)
+            webGL.drawArrays(webGL.TRIANGLES,0,3)
+
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <canvas id="myCanvas" style="border:1px solid red" width="400" height="400"></canvas>
+
+    <script>
+
+    </script>
+</body>
+
+</html>
